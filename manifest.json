@@ -10,6 +10,10 @@
     "default_icon": "assets/paint_brush_128.png",
     "default_popup": "popup.html"
   },
+  "content_scripts": [{
+      "matches": ["<all_urls>"],
+      "js": ["sketch.js"]
+  }],
   "permissions": [
     "activeTab",
     "storage"

@@ -1,31 +1,13 @@
-function getCurrentTabUrl(callback) {
-    let queryInfo = {
-        active: true,
-        currentWindow: true
-    };
 
-    chrome.tabs.query(queryInfo, (tabs) => {
-        let tab = tabs[0];
-        let url = tab.url;
-        console.assert(typeof url == 'string', 'tab.url should be a string');
-        callback(url);
-    });
-}
-
-
-function startDraw(color, weight) {
-    let drawConfig = {
-        color: color,
-        weight: weight,
-        // transparency: transparency
-    };
-    console.log(drawConfig)
-    chrome.tabs.executeScript({
-        code: 'var drawConfig = ' + JSON.stringify(drawConfig)
-    }, () => {
-        chrome.tabs.executeScript({
-            file: "sketch.js"
-        });
+function sendCommand(command, color, weight) {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+            drawConfig: {
+                color: color,
+                weight: weight
+            },
+            command: command
+        })
     });
 }
 
@@ -41,36 +23,48 @@ let selectedColour = (colours) => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    getCurrentTabUrl((url) => {
-        const colours = Array.from(document.querySelectorAll('.colour-choice'));
-        const drawIcon = document.querySelector('#draw-button');
-        const slider = document.querySelector('#weight');
-        const weightValue = document.querySelector('#weight-value');
-        
-        drawIcon.addEventListener('click', () => {
-            let selColour = selectedColour(colours);
-            let selWeight = selectedWeight();
-            startDraw(selColour, selWeight);
-        })
+    const colours = Array.from(document.querySelectorAll('.colour-choice'));
+    const drawIcon = document.querySelector('#draw-button');
+    const clear = document.querySelector('#clear-button');
+    const stop = document.querySelector('#stop-button');
+    const slider = document.querySelector('#weight');
+    const weightValue = document.querySelector('#weight-value');
 
-        colours.forEach((colour) => {
-            colour.addEventListener('click', () => {
-                colours.forEach((colour) => {
-                    colour.classList.remove('active')
-                });
-                colour.classList.add('active')
-                let selColour = selectedColour(colours);
-                let selWeight = selectedWeight();
-                startDraw(selColour, selWeight);
+    stop.addEventListener('click', () => {
+        let selColour = selectedColour(colours);
+        let selWeight = selectedWeight();
+        sendCommand('stop', selColour, selWeight);
+    })
+
+    clear.addEventListener('click', () => {
+        let selColour = selectedColour(colours);
+        let selWeight = selectedWeight();
+        sendCommand('clear', selColour, selWeight);
+    })
+
+    drawIcon.addEventListener('click', () => {
+        let selColour = selectedColour(colours);
+        let selWeight = selectedWeight();
+        sendCommand('updateConfig', selColour, selWeight);
+    })
+
+    colours.forEach((colour) => {
+        colour.addEventListener('click', () => {
+            colours.forEach((colour) => {
+                colour.classList.remove('active')
             });
-            
-        })
-
-        slider.addEventListener("input", function() {
+            colour.classList.add('active')
             let selColour = selectedColour(colours);
             let selWeight = selectedWeight();
-            weightValue.innerHTML = selWeight
-            startDraw(selColour, selWeight);
+            sendCommand('updateConfig', selColour, selWeight);
         });
+
+    })
+
+    slider.addEventListener("input", function() {
+        let selColour = selectedColour(colours);
+        let selWeight = selectedWeight();
+        weightValue.innerHTML = selWeight
+        sendCommand('updateConfig', selColour, selWeight);
     });
 });
