@@ -37,27 +37,34 @@
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
-        let direction = true;
 
         function draw(e) {
-            if (!isDrawing) return;
-            ctx.strokeStyle = drawConfig.color;
-            ctx.lineWidth = drawConfig.weight;
-            ctx.beginPath();
+            if (!isDrawing){
+                [lastX, lastY] = [e.offsetX, e.offsetY];
+                return;
+            }
 
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.quadraticCurveTo(lastX, lastY, (lastX + e.offsetX) / 2, (lastY + e.offsetY) / 2);
             ctx.stroke();
+
             [lastX, lastY] = [e.offsetX, e.offsetY];
         }
 
         canvas.addEventListener('mousedown', (e) => {
             isDrawing = true;
+            ctx.strokeStyle = drawConfig.color;
+            ctx.lineWidth = drawConfig.weight;
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
             [lastX, lastY] = [e.offsetX, e.offsetY];
         });
 
         canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseup', function(e) {
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            isDrawing = false;
+        });
         canvas.addEventListener('mouseout', () => isDrawing = false);
         initialized = true;
     }
